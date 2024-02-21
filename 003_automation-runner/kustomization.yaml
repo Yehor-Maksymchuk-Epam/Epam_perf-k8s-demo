@@ -1,0 +1,21 @@
+kind: Kustomization
+sortOptions:
+  order: legacy
+  legacySortOptions:
+    orderFirst:
+    - Job
+namespace: qa-automation
+generatorOptions:
+  disableNameSuffixHash: true
+commonLabels:
+  app.kubernetes.io/instance: automation-runer
+  app.kubernetes.io/managed-by: Kustomize
+  app.kubernetes.io/name: automation-runer
+  app.kubernetes.io/version: 1.1.1
+configMapGenerator:
+- name: automation-runer-data
+  files:
+  - run.sh
+resources:
+- job.yaml
+- pod.yaml

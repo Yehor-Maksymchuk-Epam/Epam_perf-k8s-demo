@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: performance-tests
+spec:
+  completions: 10
+  parallelism: 10
+  completionMode: "Indexed"
+  backoffLimit: 1
+  template:
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      restartPolicy: Never
+      containers:
+        - name: performance-tests
+          image: maven:3.9.6-eclipse-temurin-17
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "/app/run.sh"]
+          env:
+            - name: GATLING_DURATION_SECONDS
+              value: "1"
+            - name: GATLING_NUMBER_USERS
+              value: "50"
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+            - name: reports
+              mountPath: /home/gradle/reports
+            - name: data
+              mountPath: /app
+      dnsPolicy: ClusterFirst
+      volumes:
+        - name: reports
+          persistentVolumeClaim:
+            claimName: efs-claim
+        - name: data
+          projected:
+            sources:
+              - secret:
+                  name: automation-runer-okta
+                  items:
+                    - key: okta_secret
+                      path: okta.json
+              - configMap:
+                  name: automation-runer-data
+                  items:
+                    - key: run.sh
+                      path: run.sh
